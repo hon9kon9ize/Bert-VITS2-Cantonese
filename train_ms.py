@@ -331,6 +331,11 @@ def run():
         for param in net_g.enc_p.bert_proj.parameters():
             param.requires_grad = False
 
+    if getattr(hps.train, "freeze_YUE_bert", False):
+        logger.info("Freezing YUE bert encoder !!!")
+        for param in net_g.enc_p.yue_bert_proj.parameters():
+            param.requires_grad = False
+
     if getattr(hps.train, "freeze_EN_bert", False):
         logger.info("Freezing EN bert encoder !!!")
         for param in net_g.enc_p.en_bert_proj.parameters():
@@ -599,7 +604,7 @@ def train_and_evaluate(
     if writers is not None:
         writer, writer_eval = writers
 
-    train_loader.batch_sampler.set_epoch(epoch)
+    # train_loader.batch_sampler.set_epoch(epoch)
     global global_step
 
     net_g.train()
@@ -619,6 +624,7 @@ def train_and_evaluate(
         bert,
         ja_bert,
         en_bert,
+        yue_bert,
         style_vec,
     ) in enumerate(train_loader):
         if net_g.module.use_noise_scaled_mas:
@@ -642,6 +648,7 @@ def train_and_evaluate(
         bert = bert.cuda(local_rank, non_blocking=True)
         ja_bert = ja_bert.cuda(local_rank, non_blocking=True)
         en_bert = en_bert.cuda(local_rank, non_blocking=True)
+        yue_bert = yue_bert.cuda(local_rank, non_blocking=True)
         style_vec = style_vec.cuda(local_rank, non_blocking=True)
 
         with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
@@ -665,6 +672,7 @@ def train_and_evaluate(
                 bert,
                 ja_bert,
                 en_bert,
+                yue_bert,
                 style_vec,
             )
             mel = spec_to_mel_torch(
@@ -902,6 +910,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
             bert,
             ja_bert,
             en_bert,
+            yue_bert,
             style_vec,
         ) in enumerate(eval_loader):
             x, x_lengths = x.cuda(), x_lengths.cuda()
@@ -911,6 +920,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
             bert = bert.cuda()
             ja_bert = ja_bert.cuda()
             en_bert = en_bert.cuda()
+            yue_bert = yue_bert.cuda()
             tone = tone.cuda()
             language = language.cuda()
             style_vec = style_vec.cuda()
@@ -924,6 +934,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
                     bert,
                     ja_bert,
                     en_bert,
+                    yue_bert,
                     style_vec,
                     y=spec,
                     max_len=1000,

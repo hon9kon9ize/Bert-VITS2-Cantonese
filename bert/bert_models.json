@@ -1,4 +1,8 @@
 {
+    "bert-large-cantonese": {
+        "repo_id": "hon9kon9ize/bert-large-cantonese",
+        "files": ["pytorch_model.bin"]
+    },
     "deberta-v2-large-japanese-char-wwm": {
         "repo_id": "ku-nlp/deberta-v2-large-japanese-char-wwm",
         "files": ["pytorch_model.bin"]

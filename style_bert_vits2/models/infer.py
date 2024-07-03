@@ -177,14 +177,22 @@ def get_text(
         bert = bert_ori
         ja_bert = torch.zeros(1024, len(phone))
         en_bert = torch.zeros(1024, len(phone))
+        yue_bert = torch.zeros(1024, len(phone))
     elif language_str == Languages.JP:
         bert = torch.zeros(1024, len(phone))
         ja_bert = bert_ori
         en_bert = torch.zeros(1024, len(phone))
+        yue_bert = torch.zeros(1024, len(phone))
     elif language_str == Languages.EN:
         bert = torch.zeros(1024, len(phone))
         ja_bert = torch.zeros(1024, len(phone))
         en_bert = bert_ori
+        yue_bert = torch.zeros(1024, len(phone))
+    elif language_str == Languages.YUE:
+        bert = torch.zeros(1024, len(phone))
+        ja_bert = torch.zeros(1024, len(phone))
+        en_bert = torch.zeros(1024, len(phone))
+        yue_bert = bert_ori
     else:
         raise ValueError("language_str should be ZH, JP or EN")
 
@@ -195,7 +203,7 @@ def get_text(
     phone = torch.LongTensor(phone)
     tone = torch.LongTensor(tone)
     language = torch.LongTensor(language)
-    return bert, ja_bert, en_bert, phone, tone, language
+    return bert, ja_bert, en_bert, yue_bert, phone, tone, language
 
 
 def infer(
@@ -218,7 +226,7 @@ def infer(
     given_tone: Optional[list[int]] = None,
 ):
     is_jp_extra = hps.version.endswith("JP-Extra")
-    bert, ja_bert, en_bert, phones, tones, lang_ids = get_text(
+    bert, ja_bert, en_bert, yue_bert, phones, tones, lang_ids = get_text(
         text,
         language,
         hps,
@@ -235,6 +243,7 @@ def infer(
         bert = bert[:, 3:]
         ja_bert = ja_bert[:, 3:]
         en_bert = en_bert[:, 3:]
+        yue_bert = yue_bert[:, 3:]
     if skip_end:
         phones = phones[:-2]
         tones = tones[:-2]
@@ -242,6 +251,7 @@ def infer(
         bert = bert[:, :-2]
         ja_bert = ja_bert[:, :-2]
         en_bert = en_bert[:, :-2]
+        yue_bert = yue_bert[:, :-2]
     with torch.no_grad():
         x_tst = phones.to(device).unsqueeze(0)
         tones = tones.to(device).unsqueeze(0)
@@ -249,6 +259,7 @@ def infer(
         bert = bert.to(device).unsqueeze(0)
         ja_bert = ja_bert.to(device).unsqueeze(0)
         en_bert = en_bert.to(device).unsqueeze(0)
+        yue_bert = yue_bert.to(device).unsqueeze(0)
         x_tst_lengths = torch.LongTensor([phones.size(0)]).to(device)
         style_vec_tensor = torch.from_numpy(style_vec).to(device).unsqueeze(0)
         del phones
@@ -277,6 +288,7 @@ def infer(
                 bert,
                 ja_bert,
                 en_bert,
+                yue_bert,
                 style_vec=style_vec_tensor,
                 sdp_ratio=sdp_ratio,
                 noise_scale=noise_scale,
@@ -293,6 +305,7 @@ def infer(
             sid_tensor,
             ja_bert,
             en_bert,
+            yue_bert,
             style_vec,
         )  # , emo
         if torch.cuda.is_available():

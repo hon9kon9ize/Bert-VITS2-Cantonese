@@ -22,6 +22,7 @@
     "freeze_ZH_bert": false,
     "freeze_JP_bert": false,
     "freeze_EN_bert": false,
+    "freeze_YUE_bert": false,
     "freeze_emo": false,
     "freeze_style": false,
     "freeze_decoder": false

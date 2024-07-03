@@ -32,6 +32,7 @@ class HyperParametersTrain(BaseModel):
     freeze_ZH_bert: bool = False
     freeze_JP_bert: bool = False
     freeze_EN_bert: bool = False
+    freeze_YUE_bert: bool = False
     freeze_emo: bool = False
     freeze_style: bool = False
     freeze_decoder: bool = False

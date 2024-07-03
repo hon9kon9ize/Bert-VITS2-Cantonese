@@ -54,6 +54,7 @@ def initialize(
     freeze_EN_bert: bool,
     freeze_JP_bert: bool,
     freeze_ZH_bert: bool,
+    freeze_YUE_bert: bool,
     freeze_style: bool,
     freeze_decoder: bool,
     use_jp_extra: bool,
@@ -70,7 +71,7 @@ def initialize(
     logger_handler = logger.add(paths.dataset_path / file_name)
 
     logger.info(
-        f"Step 1: start initialization...\nmodel_name: {model_name}, batch_size: {batch_size}, epochs: {epochs}, save_every_steps: {save_every_steps}, freeze_ZH_bert: {freeze_ZH_bert}, freeze_JP_bert: {freeze_JP_bert}, freeze_EN_bert: {freeze_EN_bert}, freeze_style: {freeze_style}, freeze_decoder: {freeze_decoder}, use_jp_extra: {use_jp_extra}"
+        f"Step 1: start initialization...\nmodel_name: {model_name}, batch_size: {batch_size}, epochs: {epochs}, save_every_steps: {save_every_steps}, freeze_ZH_bert: {freeze_ZH_bert}, freeze_YUE_bert: {freeze_YUE_bert}, freeze_JP_bert: {freeze_JP_bert}, freeze_EN_bert: {freeze_EN_bert}, freeze_style: {freeze_style}, freeze_decoder: {freeze_decoder}, use_jp_extra: {use_jp_extra}"
     )
 
     default_config_path = (
@@ -90,6 +91,7 @@ def initialize(
     config["train"]["freeze_EN_bert"] = freeze_EN_bert
     config["train"]["freeze_JP_bert"] = freeze_JP_bert
     config["train"]["freeze_ZH_bert"] = freeze_ZH_bert
+    config["train"]["freeze_YUE_bert"] = freeze_YUE_bert
     config["train"]["freeze_style"] = freeze_style
     config["train"]["freeze_decoder"] = freeze_decoder
 
@@ -269,6 +271,7 @@ def preprocess_all(
     freeze_EN_bert: bool,
     freeze_JP_bert: bool,
     freeze_ZH_bert: bool,
+    freeze_YUE_bert: bool,
     freeze_style: bool,
     freeze_decoder: bool,
     use_jp_extra: bool,
@@ -286,6 +289,7 @@ def preprocess_all(
         freeze_EN_bert=freeze_EN_bert,
         freeze_JP_bert=freeze_JP_bert,
         freeze_ZH_bert=freeze_ZH_bert,
+        freeze_YUE_bert=freeze_YUE_bert,
         freeze_style=freeze_style,
         freeze_decoder=freeze_decoder,
         use_jp_extra=use_jp_extra,
@@ -578,6 +582,10 @@ def create_train_app():
                         label="中国語bert部分を凍結",
                         value=False,
                     )
+                    freeze_YUE_bert = gr.Checkbox(
+                        label="Freeze the part of Cantonese bert",
+                        value=False,
+                    )
                     freeze_style = gr.Checkbox(
                         label="スタイル部分を凍結",
                         value=False,
@@ -754,6 +762,7 @@ def create_train_app():
                 freeze_EN_bert,
                 freeze_JP_bert,
                 freeze_ZH_bert,
+                freeze_YUE_bert,
                 freeze_style,
                 freeze_decoder,
                 use_jp_extra,

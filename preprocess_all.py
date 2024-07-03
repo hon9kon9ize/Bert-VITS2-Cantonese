@@ -58,6 +58,11 @@ if __name__ == "__main__":
         help="Freeze Chinese BERT",
     )
     parser.add_argument(
+        "--freeze_YUE_bert",
+        action="store_true",
+        help="Freeze Cantonese BERT",
+    )
+    parser.add_argument(
         "--freeze_style",
         action="store_true",
         help="Freeze style vector",
@@ -104,6 +109,7 @@ if __name__ == "__main__":
         freeze_EN_bert=args.freeze_EN_bert,
         freeze_JP_bert=args.freeze_JP_bert,
         freeze_ZH_bert=args.freeze_ZH_bert,
+        freeze_YUE_bert=args.freeze_YUE_bert,
         freeze_style=args.freeze_style,
         freeze_decoder=args.freeze_decoder,
         use_jp_extra=args.use_jp_extra,
