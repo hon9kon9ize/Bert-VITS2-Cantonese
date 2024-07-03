@@ -10,7 +10,7 @@ jieba.load_userdict("./text/yue_dict.txt")
 
 jyutping_dict = {}
 
-with open("./text/jyutping.csv", "r") as f:
+with open("./text/jyutping.csv", "r", encoding="utf-8") as f:
     for line in f:
         line = line.strip()
         if not line:
