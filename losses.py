@@ -78,7 +78,7 @@ class WavLMLoss(torch.nn.Module):
             ).hidden_states
         y_rec_16 = self.resample(y_rec)
         y_rec_embeddings = self.wavlm(
-            input_values=y_rec_16.squeeze(), output_hidden_states=True
+            input_values=y_rec_16, output_hidden_states=True
         ).hidden_states
 
         floss = 0
