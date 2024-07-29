@@ -140,16 +140,17 @@ def infer(
     noise_scale,
     noise_scale_w,
     length_scale,
-    sid,
     language,
     hps,
     net_g,
     device,
+    sid=None,
     reference_audio=None,
     skip_start=False,
     skip_end=False,
     style_text=None,
     style_weight=0.7,
+    speaker_emb=None
 ):
     # # 2.2版本参数位置变了
     # inferMap_V4 = {
@@ -279,20 +280,22 @@ def infer(
         x_tst_lengths = torch.LongTensor([phones.size(0)]).to(device)
         # emo = emo.to(device).unsqueeze(0)
         del phones
-        speakers = torch.LongTensor([hps.data.spk2id[sid]]).to(device)
+        speakers = torch.LongTensor([hps.data.spk2id[sid]]).to(
+            device) if sid is not None else None
         audio = (
             net_g.infer(
                 x_tst,
                 x_tst_lengths,
-                speakers,
                 tones,
                 lang_ids,
                 en_bert,
                 yue_bert,
+                speakers,
                 sdp_ratio=sdp_ratio,
                 noise_scale=noise_scale,
                 noise_scale_w=noise_scale_w,
                 length_scale=length_scale,
+                speaker_emb=speaker_emb
             )[0][0, 0]
             .data.cpu()
             .float()

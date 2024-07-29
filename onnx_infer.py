@@ -1,4 +1,8 @@
-﻿from onnx_modules.V220_OnnxInference import OnnxInferenceSession
+﻿from onnx_modules.V230_OnnxInference import OnnxInferenceSession
+import soundfile as sf
+import commons
+from text import cleaned_text_to_sequence, get_bert
+from text.cleaner import clean_text
 import numpy as np
 
 Session = OnnxInferenceSession(
@@ -13,48 +17,53 @@ Session = OnnxInferenceSession(
     Providers=["CPUExecutionProvider"],
 )
 
-# 这里的输入和原版是一样的，只需要在原版预处理结果出来之后加上.numpy()即可
-x = np.array(
-    [
-        0,
-        97,
-        0,
-        8,
-        0,
-        78,
-        0,
-        8,
-        0,
-        76,
-        0,
-        37,
-        0,
-        40,
-        0,
-        97,
-        0,
-        8,
-        0,
-        23,
-        0,
-        8,
-        0,
-        74,
-        0,
-        26,
-        0,
-        104,
-        0,
-    ]
-)
-tone = np.zeros_like(x)
-language = np.zeros_like(x)
+
+def get_text(text, language_str, style_text=None, style_weight=0.7):
+    style_text = None if style_text == "" else style_text
+    # 在此处实现当前版本的get_text
+    norm_text, phone, tone, word2ph = clean_text(text, language_str)
+    phone, tone, language = cleaned_text_to_sequence(phone, tone, language_str)
+
+    # add blank
+    phone = commons.intersperse(phone, 0)
+    tone = commons.intersperse(tone, 0)
+    language = commons.intersperse(language, 0)
+    for i in range(len(word2ph)):
+        word2ph[i] = word2ph[i] * 2
+    word2ph[0] += 1
+
+    bert_ori = get_bert(
+        norm_text, word2ph, language_str, "cpu", style_text, style_weight
+    )
+    del word2ph
+    assert bert_ori.shape[-1] == len(phone), phone
+
+    if language_str == "EN":
+        en_bert = bert_ori
+        yue_bert = np.random.randn(1024, len(phone))
+    elif language_str == "YUE":
+        en_bert = np.random.randn(1024, len(phone))
+        yue_bert = bert_ori
+    else:
+        raise ValueError("language_str should be EN or YUE")
+
+    assert yue_bert.shape[-1] == len(
+        phone
+    ), f"Bert seq len {yue_bert.shape[-1]} != {len(phone)}"
+
+    phone = np.asarray(phone)
+    tone = np.asarray(tone)
+    language = np.asarray(language)
+    en_bert = np.asarray(en_bert.T)
+    yue_bert = np.asarray(yue_bert.T)
+
+    return en_bert, yue_bert, phone, tone, language
+
+
+en_bert, yue_bert, x, tone, language = get_text("本身我就係一個言出必達嘅人", "YUE")
 sid = np.array([0])
-bert = np.random.randn(x.shape[0], 1024)
-ja_bert = np.random.randn(x.shape[0], 1024)
-en_bert = np.random.randn(x.shape[0], 1024)
-emo = np.random.randn(512, 1)
 
-audio = Session(x, tone, language, bert, ja_bert, en_bert, emo, sid)
+audio = Session(x, tone, language, en_bert, yue_bert, sid)
 
-print(audio)
+# export audio
+sf.write("output.wav", audio[0][0], 44100)

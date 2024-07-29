@@ -46,9 +46,8 @@ class OnnxInferenceSession:
         seq,
         tone,
         language,
-        bert_zh,
-        bert_jp,
         bert_en,
+        bert_yue,
         sid,
         seed=114514,
         seq_noise_scale=0.8,
@@ -70,15 +69,15 @@ class OnnxInferenceSession:
             },
         )[0]
         g = np.expand_dims(g, -1)
+
         enc_rtn = self.enc.run(
             None,
             {
                 "x": seq.astype(np.int64),
                 "t": tone.astype(np.int64),
                 "language": language.astype(np.int64),
-                "bert_0": bert_zh.astype(np.float32),
-                "bert_1": bert_jp.astype(np.float32),
-                "bert_2": bert_en.astype(np.float32),
+                "bert_0": bert_en.astype(np.float32),
+                "bert_1": bert_yue.astype(np.float32),
                 "g": g.astype(np.float32),
             },
         )
@@ -86,7 +85,8 @@ class OnnxInferenceSession:
         np.random.seed(seed)
         zinput = np.random.randn(x.shape[0], 2, x.shape[2]) * sdp_noise_scale
         logw = self.sdp.run(
-            None, {"x": x, "x_mask": x_mask, "zin": zinput.astype(np.float32), "g": g}
+            None, {"x": x, "x_mask": x_mask,
+                   "zin": zinput.astype(np.float32), "g": g}
         )[0] * (sdp_ratio) + self.dp.run(None, {"x": x, "x_mask": x_mask, "g": g})[
             0
         ] * (

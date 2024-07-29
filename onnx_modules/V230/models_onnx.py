@@ -156,7 +156,8 @@ class StochasticDurationPredictor(nn.Module):
         gin_channels=0,
     ):
         super().__init__()
-        filter_channels = in_channels  # it needs to be removed from future version.
+        # it needs to be removed from future version.
+        filter_channels = in_channels
         self.in_channels = in_channels
         self.filter_channels = filter_channels
         self.kernel_size = kernel_size
@@ -315,9 +316,8 @@ class TextEncoder(nn.Module):
         nn.init.normal_(self.tone_emb.weight, 0.0, hidden_channels**-0.5)
         self.language_emb = nn.Embedding(num_languages, hidden_channels)
         nn.init.normal_(self.language_emb.weight, 0.0, hidden_channels**-0.5)
-        self.bert_proj = nn.Conv1d(1024, hidden_channels, 1)
-        self.ja_bert_proj = nn.Conv1d(1024, hidden_channels, 1)
         self.en_bert_proj = nn.Conv1d(1024, hidden_channels, 1)
+        self.yue_bert_proj = nn.Conv1d(1024, hidden_channels, 1)
 
         self.encoder = attentions_onnx.Encoder(
             hidden_channels,
@@ -330,22 +330,20 @@ class TextEncoder(nn.Module):
         )
         self.proj = nn.Conv1d(hidden_channels, out_channels * 2, 1)
 
-    def forward(self, x, x_lengths, tone, language, bert, ja_bert, en_bert, g=None):
+    def forward(self, x, x_lengths, tone, language, en_bert, yue_bert, g=None):
         x_mask = torch.ones_like(x).unsqueeze(0)
-        bert_emb = self.bert_proj(bert.transpose(0, 1).unsqueeze(0)).transpose(1, 2)
-        ja_bert_emb = self.ja_bert_proj(ja_bert.transpose(0, 1).unsqueeze(0)).transpose(
+        en_bert_emb = self.en_bert_proj(en_bert.transpose(0, 1).unsqueeze(0)).transpose(
             1, 2
         )
-        en_bert_emb = self.en_bert_proj(en_bert.transpose(0, 1).unsqueeze(0)).transpose(
+        yue_bert_emb = self.yue_bert_proj(yue_bert.transpose(0, 1).unsqueeze(0)).transpose(
             1, 2
         )
         x = (
             self.emb(x)
             + self.tone_emb(tone)
             + self.language_emb(language)
-            + bert_emb
-            + ja_bert_emb
             + en_bert_emb
+            + yue_bert_emb
         ) * math.sqrt(
             self.hidden_channels
         )  # [b, t, h]
@@ -687,12 +685,14 @@ class WavLMDiscriminator(nn.Module):
                     )
                 ),
                 norm_f(
-                    nn.Conv1d(initial_channel * 4, initial_channel * 4, 5, 1, padding=2)
+                    nn.Conv1d(initial_channel * 4,
+                              initial_channel * 4, 5, 1, padding=2)
                 ),
             ]
         )
 
-        self.conv_post = norm_f(Conv1d(initial_channel * 4, 1, 3, 1, padding=1))
+        self.conv_post = norm_f(
+            Conv1d(initial_channel * 4, 1, 3, 1, padding=1))
 
     def forward(self, x):
         x = self.pre(x)
@@ -824,7 +824,8 @@ class SynthesizerTrn(nn.Module):
         )
         self.use_sdp = use_sdp
         self.use_noise_scaled_mas = kwargs.get("use_noise_scaled_mas", False)
-        self.mas_noise_scale_initial = kwargs.get("mas_noise_scale_initial", 0.01)
+        self.mas_noise_scale_initial = kwargs.get(
+            "mas_noise_scale_initial", 0.01)
         self.noise_scale_delta = kwargs.get("noise_scale_delta", 2e-6)
         self.current_mas_noise_scale = self.mas_noise_scale_initial
         if self.use_spk_conditioned_encoder and gin_channels > 0:
@@ -907,34 +908,62 @@ class SynthesizerTrn(nn.Module):
             torch.LongTensor(
                 [
                     0,
+                    0,
+                    0,
+                    25,
+                    0,
+                    88,
+                    0,
+                    80,
+                    0,
+                    17,
+                    0,
+                    65,
+                    0,
+                    66,
+                    0,
                     97,
                     0,
-                    8,
+                    22,
                     0,
-                    78,
+                    46,
                     0,
-                    8,
+                    14,
                     0,
-                    76,
+                    58,
                     0,
-                    37,
+                    21,
                     0,
-                    40,
+                    44,
                     0,
-                    97,
+                    66,
                     0,
-                    8,
+                    58,
                     0,
-                    23,
-                    0,
-                    8,
-                    0,
-                    74,
+                    52,
                     0,
                     26,
                     0,
-                    104,
+                    38,
                     0,
+                    25,
+                    0,
+                    55,
+                    0,
+                    28,
+                    0,
+                    10,
+                    0,
+                    44,
+                    0,
+                    30,
+                    0,
+                    58,
+                    0,
+                    17,
+                    0,
+                    0,
+                    0
                 ]
             )
             .unsqueeze(0)
@@ -944,9 +973,8 @@ class SynthesizerTrn(nn.Module):
         language = torch.zeros_like(x).cpu()
         x_lengths = torch.LongTensor([x.shape[1]]).cpu()
         sid = torch.LongTensor([0]).cpu()
-        bert = torch.randn(size=(x.shape[1], 1024)).cpu()
-        ja_bert = torch.randn(size=(x.shape[1], 1024)).cpu()
         en_bert = torch.randn(size=(x.shape[1], 1024)).cpu()
+        yue_bert = torch.randn(size=(x.shape[1], 1024)).cpu()
 
         if self.n_speakers > 0:
             g = self.emb_g(sid).unsqueeze(-1)  # [b, h, 1]
@@ -963,7 +991,7 @@ class SynthesizerTrn(nn.Module):
 
         torch.onnx.export(
             self.enc_p,
-            (x, x_lengths, tone, language, bert, ja_bert, en_bert, g),
+            (x, x_lengths, tone, language, en_bert, yue_bert, g),
             f"onnx/{path}/{path}_enc_p.onnx",
             input_names=[
                 "x",
@@ -972,7 +1000,6 @@ class SynthesizerTrn(nn.Module):
                 "language",
                 "bert_0",
                 "bert_1",
-                "bert_2",
                 "g",
             ],
             output_names=["xout", "m_p", "logs_p", "x_mask"],
@@ -982,7 +1009,6 @@ class SynthesizerTrn(nn.Module):
                 "language": [0, 1],
                 "bert_0": [0],
                 "bert_1": [0],
-                "bert_2": [0],
                 "xout": [0, 2],
                 "m_p": [0, 2],
                 "logs_p": [0, 2],
@@ -993,11 +1019,12 @@ class SynthesizerTrn(nn.Module):
         )
 
         x, m_p, logs_p, x_mask = self.enc_p(
-            x, x_lengths, tone, language, bert, ja_bert, en_bert, g
+            x, x_lengths, tone, language, en_bert, yue_bert, g
         )
 
         zinput = (
-            torch.randn(x.size(0), 2, x.size(2)).to(device=x.device, dtype=x.dtype)
+            torch.randn(x.size(0), 2, x.size(2)).to(
+                device=x.device, dtype=x.dtype)
             * noise_scale_w
         )
         torch.onnx.export(
@@ -1006,7 +1033,8 @@ class SynthesizerTrn(nn.Module):
             f"onnx/{path}/{path}_sdp.onnx",
             input_names=["x", "x_mask", "zin", "g"],
             output_names=["logw"],
-            dynamic_axes={"x": [0, 2], "x_mask": [0, 2], "zin": [0, 2], "logw": [0, 2]},
+            dynamic_axes={"x": [0, 2], "x_mask": [
+                0, 2], "zin": [0, 2], "logw": [0, 2]},
             verbose=True,
         )
         torch.onnx.export(

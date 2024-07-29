@@ -4,6 +4,7 @@ import unicodedata
 import cn2an
 import pycantonese
 import jieba
+import csv
 
 
 jieba.load_userdict("./text/yue_dict.txt")
@@ -54,6 +55,7 @@ rep_map = {
     "︰": ",",
     "；": ",",
     "，": ",",
+    "﹐": ",",
     "。": ".",
     "！": "!",
     "？": "?",
@@ -160,7 +162,19 @@ def jyuping_to_initials_finals_tones(jyuping_syllables):
     return initials_finals, tones, word2ph
 
 
+wordshk_juytping = {}
+
+# with open("/notebooks/bert-vits2/Bert-VITS2-Cantonese/wordshk_juytping.csv", "r") as csv_file:
+#     csv_reader = csv.reader(csv_file, delimiter=',')
+
+#     for row in csv_reader:
+#         wordshk_juytping[text_normalize(row[0])] = row[1]
+
+
 def get_jyutping(text):
+    if text in wordshk_juytping:
+        return wordshk_juytping[text].split(" ")
+
     words = word_segmentation(text)
     jyutping_array = []
 
@@ -222,7 +236,8 @@ def parse_jyutping(jyutping):
         tone = int(jyutping[-1])
         jyutping = jyutping[:-1]
     except:
-        raise ValueError("Jyutping string does not end with a tone number")
+        raise ValueError(
+            f"Jyutping string does not end with a tone number, in {orig_jyutping}")
     final = jyutping
 
     assert init in INITIALS, f"Invalid initial: {init}, in {orig_jyutping}"
@@ -247,7 +262,7 @@ if __name__ == "__main__":
     from text.cantonese_bert import get_bert_feature
 
     # text = "Apple BB 你點解會咁柒㗎？我真係唔該晒你呀！123"
-    text = "佢哋唔使返工嘅时候就係正常食飯時間囉"
+    text = "佢邊係想辭工吖，跳下草裙舞想加人工之嘛。"
     # text = "我個 app 嘅介紹文想由你寫，因為我唔知從一般用家角度要細緻到乜程度"
     # text = "佢哋最叻咪就係去㗇人傷害人,得個殼咋!"
     text = text_normalize(text)

@@ -566,6 +566,48 @@ class Generator(torch.nn.Module):
             layer.remove_weight_norm()
 
 
+class LanguageDiscriminator(torch.nn.Module):
+    def __init__(self, use_spectral_norm):
+        super(LanguageDiscriminator, self).__init__()
+        self.use_spectral_norm = use_spectral_norm
+        norm_f = weight_norm if use_spectral_norm is False else spectral_norm
+        self.convs = nn.ModuleList(
+            [
+                norm_f(
+                    Conv1d(1, 16, 15, 1, padding=7)
+                ),
+                norm_f(
+                    Conv1d(16, 64, 41, 4, groups=4, padding=20)
+                ),
+                norm_f(
+                    Conv1d(64, 256, 41, 4, groups=16, padding=20)
+                ),
+                norm_f(
+                    Conv1d(256, 1024, 41, 4, groups=64, padding=20)
+                ),
+                norm_f(
+                    Conv1d(1024, 1024, 41, 4, groups=256, padding=20)
+                ),
+                norm_f(
+                    Conv1d(1024, 1024, 5, 1, padding=2)
+                ),
+            ]
+        )
+        if use_spectral_norm:
+            self.conv = torch.nn.utils.spectral_norm(self.conv)
+        self.fc = norm_f(nn.Linear(1024, 1))
+
+    def forward(self, y):
+        for layer in self.convs:
+            y = layer(y)
+            y = F.leaky_relu(y, modules.LRELU_SLOPE)
+        y = torch.mean(y, dim=2)
+        y = self.fc(y)
+        y = torch.sigmoid(y)
+
+        return y
+
+
 class DiscriminatorP(torch.nn.Module):
     def __init__(self, period, kernel_size=5, stride=3, use_spectral_norm=False):
         super(DiscriminatorP, self).__init__()
@@ -1036,25 +1078,27 @@ class SynthesizerTrn(nn.Module):
         self,
         x,
         x_lengths,
-        sid,
         tone,
         language,
         en_bert,
         yue_bert,
+        sid=None,
         noise_scale=0.667,
         length_scale=1,
         noise_scale_w=0.8,
         max_len=None,
         sdp_ratio=0,
         y=None,
+        speaker_emb=None,
     ):
         # x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths, tone, language, bert)
         # g = self.gst(y)
-        if self.n_speakers > 0:
+        if speaker_emb is not None:
+            g = speaker_emb.unsqueeze(-1)
+        elif self.n_speakers > 0 and sid is not None:
             g = self.emb_g(sid).unsqueeze(-1)  # [b, h, 1]
         else:
             g = self.ref_enc(y.transpose(1, 2)).unsqueeze(-1)
-
         x, m_p, logs_p, x_mask = self.enc_p(
             x, x_lengths, tone, language, en_bert, yue_bert, g=g
         )

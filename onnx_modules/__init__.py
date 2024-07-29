@@ -8,8 +8,6 @@ def export_onnx(export_path, model_path, config_path, novq, dev, Extra):
     enable_emo = False
     BertPaths = [
         "chinese-roberta-wwm-ext-large",
-        "deberta-v2-large-japanese",
-        "bert-base-japanese-v3",
         "bert-large-cantonese"
     ]
     if version == "2.0" or (version == "2.1" and novq):
@@ -24,8 +22,6 @@ def export_onnx(export_path, model_path, config_path, novq, dev, Extra):
             from .V220 import SynthesizerTrn, symbols
     elif version == "2.3":
         from .V230 import SynthesizerTrn, symbols
-
-        BertPaths[1] = "deberta-v2-large-japanese-char-wwm"
     elif version == "2.4":
         enable_emo = True
         if Extra == "chinese":
@@ -48,7 +44,7 @@ def export_onnx(export_path, model_path, config_path, novq, dev, Extra):
     for key in hps.data.spk2id.keys():
         spklist.append(key)
 
-    LangDict = {"ZH": [0, 0], "JP": [1, 6], "EN": [2, 8]}
+    LangDict = {"EN": [0, 0], "YUE": [1, 6]}
     BertSize = 1024
     if version == "2.4":
         BertPaths = (

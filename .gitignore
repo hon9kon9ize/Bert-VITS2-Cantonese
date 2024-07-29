@@ -186,3 +186,5 @@ logs/
 Data/*
 /onnx
 /.vs
+output.wav
+pretrained_models
