@@ -177,10 +177,16 @@ def get_jyutping(text):
 
     words = word_segmentation(text)
     jyutping_array = []
+    punct_pattern = re.compile(
+        r"^[{}]+$".format(re.escape("".join(punctuation))))
 
     for word in words:
-        if word in punctuation:
-            jyutping_array.append(word)
+        if punct_pattern.match(word):
+            puncts = re.split(r"([{}])".format(
+                re.escape("".join(punctuation))), word)
+            for punct in puncts:
+                if len(punct) > 0:
+                    jyutping_array.append(punct)
         else:
             jyutpings = ""
 
