@@ -195,9 +195,6 @@ def get_jyutping(text):
             else:
                 jyutpings = word2jyutping(word)
 
-            if 'la1' in jyutpings:
-                print(text, words, jyutpings)
-
             # match multple jyutping eg: liu4 ge3, or single jyutping eg: liu4
             if not re.search(r"^([a-z]+[1-6]+[ ]?)+$", jyutpings):
                 raise ValueError(
