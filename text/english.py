@@ -1,3 +1,4 @@
+import inflect
 import pickle
 import os
 import re
@@ -234,8 +235,6 @@ def refine_syllables(syllables):
             tones.append(tone)
     return phonemes, tones
 
-
-import inflect
 
 _inflect = inflect.engine()
 _comma_number_re = re.compile(r"([0-9][0-9\,]+[0-9])")
@@ -485,10 +484,15 @@ def get_bert_feature(text, word2ph):
 if __name__ == "__main__":
     # print(get_dict())
     # print(eng_word_to_phoneme("hello"))
-    print(g2p("In this paper, we propose 1 DSPGAN, a GAN-based universal vocoder."))
+    # print(g2p("In this paper, we propose 1 DSPGAN, a GAN-based universal vocoder."))
     # all_phones = set()
     # for k, syllables in eng_dict.items():
     #     for group in syllables:
     #         for ph in group:
     #             all_phones.add(ph)
     # print(all_phones)
+
+    text = "In this paper, we propose 1 DSPGAN, a GAN-based universal vocoder."
+    phones, tones, word2ph = g2p(text)
+
+    print(len(phones), len(tones), len(word2ph))

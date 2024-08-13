@@ -18,7 +18,7 @@ Session = OnnxInferenceSession(
 )
 
 
-def get_text(text, language_str, style_text=None, style_weight=0.7):
+def get_text(text, language_str, style_text=None, style_weight=0.5):
     style_text = None if style_text == "" else style_text
     # 在此处实现当前版本的get_text
     norm_text, phone, tone, word2ph = clean_text(text, language_str)
@@ -62,6 +62,8 @@ def get_text(text, language_str, style_text=None, style_weight=0.7):
 
 en_bert, yue_bert, x, tone, language = get_text("本身我就係一個言出必達嘅人", "YUE")
 sid = np.array([0])
+
+print(x, tone, language)
 
 audio = Session(x, tone, language, en_bert, yue_bert, sid)
 
