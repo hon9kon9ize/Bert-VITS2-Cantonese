@@ -1,6 +1,61 @@
 Fork from https://github.com/fishaudio/Bert-VITS2,
 
 and borrowed the Cantonese Jyutping conversion from https://github.com/Naozumi520/Bert-VITS2-Cantonese-Yue
+# Bert-VITS2-Cantonese
+## Installation
+### Models
+- Download [bert-large-cantonese](https://huggingface.co/hon9kon9ize/bert-large-cantonese), place under `bert/bert-large-cantonese`
+- Download [bert-vits2-cantonese](https://huggingface.co/hon9kon9ize/bert-vits2-cantonese), place under `Data/bert-vits2-cantonese`
+
+### Install dependencies
+- python 3.10
+- torch 1.12.1+cu113  
+  ``` bash
+  pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
+  ``` 
+- or 2.4.0+cu121
+  ```
+  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+  ```
+- python packages
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### Configurations
+Edit the `config.yml`
+
+Set dataset_path to the path where you placed bert-vits2-cantonese
+```yaml
+dataset_path: "Data/bert-vits2-cantonese/"`
+```
+
+Specify the model for inference
+```yaml
+webui:
+  model: "G_326000.pth"
+```
+Configure the API server port
+```yaml
+server:
+  port: 5000
+```
+
+### Docker (Optional)
+Update `docker-compose.yml` to fit your use case before use
+```bash
+docker-compose up --build -d
+```
+
+## Run 
+- Web UI : `python webui.py`
+- API : `python serve.py`
+- Docker: `docker-compose up -d`
+- Interactive API demo: `python api_demo.py`. 
+  - Before use:
+  - `pip install pygame` for speech playback
+  - set `host`, `port` before use
+-----------
 
 ###
 
