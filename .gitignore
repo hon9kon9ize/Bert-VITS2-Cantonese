@@ -188,3 +188,4 @@ Data/*
 /.vs
 demo_output
 pretrained_models
+!/docker-compose.yml

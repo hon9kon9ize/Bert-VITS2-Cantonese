@@ -23,7 +23,8 @@ and borrowed the Cantonese Jyutping conversion from https://github.com/Naozumi52
   ```
 
 ### Configurations
-Edit the `config.yml`
+Save `default_config.yml` as `config.yml`
+, edit the `config.yml`
 
 Set dataset_path to the path where you placed bert-vits2-cantonese
 ```yaml
