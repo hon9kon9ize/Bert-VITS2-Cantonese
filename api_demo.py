@@ -8,7 +8,7 @@ import numpy as np
 from scipy.io import wavfile
 
 host = '127.0.0.1'
-port = 18100  # 18100 for docker
+port = 5000  # 18100 for docker
 api = 'api/v1/synthesize'
 
 

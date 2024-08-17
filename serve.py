@@ -39,13 +39,8 @@ def warmup():
 def synthesize(params):
     p = syn_default_param.copy()
     p.update(params)
-
-    try:
-        _, data = webui.tts_fn(**p)
-        return data[0], data[1]
-    except Exception as err:
-        print(err)
-        return None
+    _, data = webui.tts_fn(**p)
+    return data[0], data[1]
 
 
 if __name__ == "__main__":
@@ -67,16 +62,19 @@ if __name__ == "__main__":
     def api_v1_synthesize():
 
         # Placeholder for TTS synthesis (use an actual TTS library like pyttsx3, gTTS, or similar)
-        sample_rate, audio_concat = synthesize(request.json)
+        try:
+            sample_rate, audio_concat = synthesize(request.json)
 
-        # Convert audio data to a list for JSON serialization
-        audio_data = audio_concat.tolist()
-        response = jsonify({
-            'sample_rate': sample_rate,
-            'audio_data': audio_data
-        })
-
-        return response
+            # Convert audio data to a list for JSON serialization
+            audio_data = audio_concat.tolist()
+            response = jsonify({
+                'sample_rate': sample_rate,
+                'audio_data': audio_data
+            })
+            return response, 200
+        except Exception as err:
+            print(err)
+            return jsonify({'message': 'err'}), 500
 
 
     if __name__ == '__main__':
