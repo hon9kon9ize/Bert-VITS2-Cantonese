@@ -2,6 +2,7 @@
 This is demo of synthesis through api
 """
 import os.path
+import struct
 
 import requests
 import numpy as np
@@ -19,8 +20,7 @@ def synthesis_request(params: dict):
     try:
         response = requests.post(url, json=params, headers=headers)
         if response.status_code == 200:
-            data = response.json()
-            return data
+            return response.content
         else:
             print(f"Failed to get response: {response.status_code}")
     except Exception as err:
@@ -57,17 +57,23 @@ if __name__ == "__main__":
         text = input(">>")
         p = params_template.copy()
         p['text'] = text
-        result = synthesis_request(p)
+        data = synthesis_request(p)
 
-        if result:
-            audio_data = np.array(result['audio_data'], dtype=np.int16)
-            sample_rate = result['sample_rate']
+        if data:
+            try:
+                # Unpack the first 4 bytes to get the sample rate
+                sample_rate = struct.unpack('i', data[:4])[0]
+                # The rest is the audio data
+                audio_data = struct.unpack(f'{(len(data) - 4) // 2}h', data[4:])
+                audio_array = np.array(audio_data, dtype=np.int16)
+                # save as wav
+                file_path = 'demo_output/output_audio.wav'
+                wavfile.write(file_path, sample_rate, audio_array)
 
-            # save as wav
-            file_path = 'demo_output/output_audio.wav'
-            wavfile.write(file_path, sample_rate, audio_data)
+                # playback
+                sound = pygame.mixer.Sound(file_path)
+                sound.play()
+                pygame.time.wait(int(sound.get_length() * 1000))
+            except Exception as err:
+                print(err)
 
-            # playback
-            sound = pygame.mixer.Sound(file_path)
-            sound.play()
-            pygame.time.wait(int(sound.get_length() * 1000))

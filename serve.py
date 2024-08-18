@@ -1,11 +1,13 @@
 """
 Serve API
 """
+import struct
+
 import torch
 import utils
 from config import config
 import webui
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 
 print("init")
 from infer import get_net_g
@@ -63,14 +65,14 @@ if __name__ == "__main__":
 
         # Placeholder for TTS synthesis (use an actual TTS library like pyttsx3, gTTS, or similar)
         try:
+            # int, nparray, dtype=np.int16
             sample_rate, audio_concat = synthesize(request.json)
 
             # Convert audio data to a list for JSON serialization
-            audio_data = audio_concat.tolist()
-            response = jsonify({
-                'sample_rate': sample_rate,
-                'audio_data': audio_data
-            })
+            # convert nparray to binaries, also pack with sample rate
+            audio_data_binary = struct.pack(f'i{len(audio_concat)}h', sample_rate, *audio_concat)
+            response = Response(audio_data_binary, mimetype='application/octet-stream')
+
             return response, 200
         except Exception as err:
             print(err)

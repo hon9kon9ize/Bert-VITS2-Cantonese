@@ -56,6 +56,34 @@ docker-compose up --build -d
   - Before use:
   - `pip install pygame` for speech playback
   - set `host`, `port` before use
+
+## API
+`api/v1/synthesize` \
+request headers and body 
+```json
+{"Content-Type": "application/json"}
+{"text": "你好嗎"}
+```
+response\
+sample rate, audio data packed in response.content, to decode and save as wav:
+```python
+import struct 
+import numpy as np
+from scipy import wavfile
+data = response.content
+# Unpack the first 4 bytes to get the sample rate
+sample_rate = struct.unpack('i', data[:4])[0]
+# The rest is the audio data
+audio_data = struct.unpack(f'{(len(data) - 4) // 2}h', data[4:])
+audio_array = np.array(audio_data, dtype=np.int16)
+# save as wav
+file_path = 'demo_output/output_audio.wav'
+wavfile.write(file_path, sample_rate, audio_array)
+```
+
+
+
+
 -----------
 
 ###
