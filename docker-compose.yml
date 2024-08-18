@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  bert-vits2-cantonese:
+    build: .
+    image: bert-vits2-cantonese_image:latest
+    container_name: bert-vits2-cantonese
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+    ports:
+      - "18100:5000"  # Change this to match the port your application is using
+    volumes:
+      - .:/home/user/app
+    user: "1000:1000"  # To match the user created in the Dockerfile
+    command: python serve.py
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all

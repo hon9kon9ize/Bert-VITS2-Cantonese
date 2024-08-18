@@ -186,5 +186,6 @@ logs/
 Data/*
 /onnx
 /.vs
-output.wav
+demo_output
 pretrained_models
+!/docker-compose.yml
