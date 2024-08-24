@@ -3,25 +3,8 @@ import re
 import unicodedata
 import cn2an
 import pycantonese
-import jieba
+import ToJyutping
 import csv
-
-
-jieba.load_userdict("./text/yue_dict.txt")
-
-jyutping_dict = {}
-
-with open("./text/jyutping.csv", "r", encoding="utf-8") as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        word, jyutping = line.split(",")
-
-        if word not in jyutping_dict:
-            jyutping_dict[word] = [jyutping]
-        else:
-            jyutping_dict[word].append(jyutping)
 
 
 def normalizer(x):
@@ -129,11 +112,6 @@ def replace_chars(text):
     return text
 
 
-def word_segmentation(text):
-    words = jieba.cut(text)
-    return words
-
-
 def text_normalize(text):
     text = text.strip()
     text = normalizer(text)
@@ -172,15 +150,12 @@ wordshk_juytping = {}
 
 
 def get_jyutping(text):
-    if text in wordshk_juytping:
-        return wordshk_juytping[text].split(" ")
-
-    words = word_segmentation(text)
     jyutping_array = []
     punct_pattern = re.compile(
         r"^[{}]+$".format(re.escape("".join(punctuation))))
+    syllables = ToJyutping.get_jyutping_list(text)
 
-    for word in words:
+    for word, syllable in syllables:
         if punct_pattern.match(word):
             puncts = re.split(r"([{}])".format(
                 re.escape("".join(punctuation))), word)
@@ -188,19 +163,12 @@ def get_jyutping(text):
                 if len(punct) > 0:
                     jyutping_array.append(punct)
         else:
-            jyutpings = ""
-
-            if word in jyutping_dict:
-                jyutpings = jyutping_dict[word][0]
-            else:
-                jyutpings = word2jyutping(word)
-
             # match multple jyutping eg: liu4 ge3, or single jyutping eg: liu4
-            if not re.search(r"^([a-z]+[1-6]+[ ]?)+$", jyutpings):
+            if not re.search(r"^([a-z]+[1-6]+[ ]?)+$", syllable):
                 raise ValueError(
-                    f"Failed to convert {word} to jyutping: {jyutpings}")
+                    f"Failed to convert {word} to jyutping: {syllable}")
 
-            jyutping_array.extend(jyutpings.split(" "))
+            jyutping_array.append(syllable)
 
     return jyutping_array
 

@@ -3,7 +3,7 @@ import os
 
 if __name__ == "__main__":
     export_path = "BertVits2.2PT"
-    model_path = "/notebooks/bert-vits2/dataset/zoengjyutgaai_saamgwokjinji/models/G_326574.pth"
+    model_path = "/notebooks/bert-vits2/dataset/zoengjyutgaai_saamgwokjinji/models/G_12956.pth"
     config_path = "/notebooks/bert-vits2/dataset/zoengjyutgaai_saamgwokjinji/configs/config.json"
     novq = False
     dev = False

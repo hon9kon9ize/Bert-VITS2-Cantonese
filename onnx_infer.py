@@ -7,12 +7,12 @@ import numpy as np
 
 Session = OnnxInferenceSession(
     {
-        "enc": "onnx/BertVits2.2PT/BertVits2.2PT_enc_p.onnx",
-        "emb_g": "onnx/BertVits2.2PT/BertVits2.2PT_emb.onnx",
-        "dp": "onnx/BertVits2.2PT/BertVits2.2PT_dp.onnx",
-        "sdp": "onnx/BertVits2.2PT/BertVits2.2PT_sdp.onnx",
-        "flow": "onnx/BertVits2.2PT/BertVits2.2PT_flow.onnx",
-        "dec": "onnx/BertVits2.2PT/BertVits2.2PT_dec.onnx",
+        "enc": "onnx/BertVits2.2PT/BertVits2.2PT_enc_p.quant.onnx",
+        "emb_g": "onnx/BertVits2.2PT/BertVits2.2PT_emb.quant.onnx",
+        "dp": "onnx/BertVits2.2PT/BertVits2.2PT_dp.quant.onnx",
+        "sdp": "onnx/BertVits2.2PT/BertVits2.2PT_sdp.quant.onnx",
+        "flow": "onnx/BertVits2.2PT/BertVits2.2PT_flow.quant.onnx",
+        "dec": "onnx/BertVits2.2PT/BertVits2.2PT_dec.quant.onnx",
     },
     Providers=["CPUExecutionProvider"],
 )
