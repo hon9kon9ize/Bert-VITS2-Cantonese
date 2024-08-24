@@ -7,7 +7,6 @@ scipy
 tensorboard
 Unidecode
 amfm_decompy
-jieba
 transformers
 pycantonese
 cn2an
