@@ -30,4 +30,4 @@ sentencepiece
 pykakasi
 langid
 WeTextProcessing>=0.1.10; platform_system != "Windows"
-ToJuytping
+ToJyutping
