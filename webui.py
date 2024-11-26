@@ -231,12 +231,12 @@ def process_auto(text):
             continue
         temp_text, temp_lang = [], []
         sentences_list = split_by_language(
-            slice, target_languages=["en", "yue"])
+            slice, target_languages=["en", "zh"])
         for sentence, lang in sentences_list:
             if sentence == "":
                 continue
             temp_text.append(sentence)
-            temp_lang.append(lang.upper())
+            temp_lang.append(lang.upper().replace("ZH", "YUE"))
         _text.append(temp_text)
         _lang.append(temp_lang)
     return _text, _lang
@@ -283,7 +283,7 @@ def process_text(
             )
     elif language.lower() == "auto":
         _text, _lang = process_auto(text)
-        print(f"Text: {_text}\nLang: {_lang}")
+        print(f"Text: {_text}\nLang: {_lang}\nSpeaker: {speaker}")
         audio_list.extend(
             generate_audio_multilang(
                 _text,

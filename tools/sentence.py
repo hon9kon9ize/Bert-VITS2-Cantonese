@@ -55,6 +55,65 @@ def markup_language(text: str, target_languages: list = None) -> str:
 
     return text
 
+def move_numbers(arr):
+    result = []
+    i = 0
+    while i < len(arr):
+        current = arr[i]
+        text, lang = current
+        
+        if lang == 'en':
+            # Split the text to check for numbers at start or end
+            words = text.split()
+            if not words:  # Empty string case
+                result.append(current)
+                i += 1
+                continue
+                
+            # Initialize new parts
+            numbers_front = []
+            numbers_back = []
+            clean_words = []
+            
+            # Check each word
+            for word in words:
+                if word.replace('.','').isdigit():
+                    if not clean_words:  # If we haven't found non-number words yet
+                        numbers_front.append(word)
+                    else:
+                        numbers_back.append(word)
+                else:
+                    clean_words.append(word)
+            
+            # If we found numbers
+            if numbers_front or numbers_back:
+                # Modify previous zh entry if we have front numbers
+                if numbers_front and i > 0 and result[-1][1] == 'zh':
+                    prev_text, prev_lang = result[-1]
+                    result[-1] = (prev_text + ' ' + ' '.join(numbers_front), prev_lang)
+                
+                # Add the clean English text
+                if clean_words:
+                    result.append((' ' + ' '.join(clean_words) + ' ', 'en'))
+                
+                # Look ahead for zh entry if we have back numbers
+                if numbers_back and i+1 < len(arr) and arr[i+1][1] == 'zh':
+                    next_text, next_lang = arr[i+1]
+                    arr[i+1] = (' '.join(numbers_back) + ' ' + next_text, next_lang)
+                
+                i += 1
+            else:
+                result.append(current)
+                i += 1
+        else:
+            result.append(current)
+            i += 1
+    
+    return result
+
+def clean_multiple_spaces(arr):
+    return [(' '.join(text.split()), lang) for text, lang in arr]
+
 
 def split_by_language(text: str, target_languages: list = None) -> list:
     pattern = (
@@ -71,7 +130,7 @@ def split_by_language(text: str, target_languages: list = None) -> list:
 
     if target_languages is not None:
         sorted_target_languages = sorted(target_languages)
-        if sorted_target_languages in [["en", "zh"], ["en", "ja"], ["en", "ja", "zh"]]:
+        if sorted_target_languages in [["en", "zh"]]:
             new_sentences = []
             for sentence in sentences:
                 new_sentences.extend(split_alpha_nonalpha(sentence))
@@ -90,7 +149,7 @@ def split_by_language(text: str, target_languages: list = None) -> list:
         end += len(sentence)
         pre_lang = lang
     sentences_list.append((text[start:], pre_lang))
-
+    sentences_list = clean_multiple_spaces(move_numbers(sentences_list))
     return sentences_list
 
 
