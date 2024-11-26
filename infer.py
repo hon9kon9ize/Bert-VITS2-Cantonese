@@ -379,16 +379,16 @@ def infer_multilang(
         # emo = emo.to(device).unsqueeze(0)
         x_tst_lengths = torch.LongTensor([phones.size(0)]).to(device)
         del phones
-        speakers = torch.LongTensor([hps.data.spk2id[sid]]).to(device)
+        speakers = torch.LongTensor([hps.data.spk2id[sid]]).to(device) if sid is not None else None
         audio = (
             net_g.infer(
                 x_tst,
                 x_tst_lengths,
-                speakers,
-                tones,
-                lang_ids,
-                en_bert,
-                yue_bert,
+                sid=speakers,
+                tone=tones,
+                language=lang_ids,
+                en_bert=en_bert,
+                yue_bert=yue_bert,
                 sdp_ratio=sdp_ratio,
                 noise_scale=noise_scale,
                 noise_scale_w=noise_scale_w,
