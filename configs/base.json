@@ -10,8 +10,8 @@
       0.99
     ],
     "eps": 1e-9,
-    "batch_size": 16,
-    "bf16_run": false,
+    "batch_size": 32,
+    "bf16_run": true,
     "lr_decay": 0.999875,
     "segment_size": 8192,
     "init_lr_ratio": 1,
@@ -31,9 +31,7 @@
     "n_mel_channels": 80,
     "mel_fmin": 0.0,
     "mel_fmax": null,
-    "add_blank": false,
-    "n_speakers": 0,
-    "cleaned_text": true
+    "n_speakers": 0
   },
   "model": {
     "use_spk_conditioned_encoder": false,
