@@ -615,6 +615,8 @@ def train_and_evaluate(
                 )
 
             if global_step % hps.train.eval_interval == 0:
+                torch.cuda.empty_cache()
+
                 evaluate(rank, hps, net_g, eval_loader, writer_eval)
                 utils.save_checkpoint(
                     net_g,
@@ -659,6 +661,8 @@ def train_and_evaluate(
     # torch.cuda.empty_cache()
     if rank == 0:
         logger.info("====> Epoch: {}".format(epoch))
+
+    torch.cuda.empty_cache()
 
 
 def evaluate(rank, hps, generator, eval_loader, writer_eval):
