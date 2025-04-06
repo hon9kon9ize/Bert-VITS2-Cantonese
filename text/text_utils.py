@@ -183,7 +183,7 @@ class TextCleaner:
         word2ph = []
         chars = split_jyutping(text)
 
-        for syllable in chars:
+        for i, syllable in enumerate(chars):
             _syllables = re.findall(r"[a-z]+[1-9]{1}", syllable)
 
             if len(_syllables) == 0:
@@ -212,7 +212,11 @@ class TextCleaner:
 
             word2ph.append(_word2ph_)
 
-        assert len(chars) == len(word2ph), f"{len(chars)} != {len(word2ph)}"
+            # Add [SEP] token between syllables
+            if i < len(chars) - 1:
+                indexes.append(self.word_index_dictionary["[SEP]"])
+                word2ph.append(1)
+
         assert len(indexes) == sum(word2ph), f"{len(indexes)} != {sum(word2ph)}"
 
         return indexes, word2ph
