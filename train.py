@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 
 from mel_processing import mel_spectrogram_torch, spec_to_mel_torch
 from losses import (
@@ -377,7 +377,9 @@ def train_and_evaluate(
             )
             net_g.module.current_mas_noise_scale = max(current_mas_noise_scale, 0.0)
 
-        with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
+        with autocast(
+            device_type="cuda", enabled=hps.train.bf16_run, dtype=torch.bfloat16
+        ):
             (
                 y_hat,
                 l_length,
@@ -418,7 +420,9 @@ def train_and_evaluate(
 
             # Discriminator
             y_d_hat_r, y_d_hat_g, _, _ = net_d(y, y_hat.detach())
-            with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
+            with autocast(
+                device_type="cuda", enabled=hps.train.bf16_run, dtype=torch.bfloat16
+            ):
                 loss_disc, losses_disc_r, losses_disc_g = discriminator_loss(
                     y_d_hat_r, y_d_hat_g
                 )
@@ -440,7 +444,9 @@ def train_and_evaluate(
                 )
                 y_dur_hat_r = y_dur_hat_r + y_dur_hat_r_sdp
                 y_dur_hat_g = y_dur_hat_g + y_dur_hat_g_sdp
-                with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
+                with autocast(
+                    device_type="cuda", enabled=hps.train.bf16_run, dtype=torch.bfloat16
+                ):
                     # TODO: I think need to mean using the mask, but for now, just mean all
                     (
                         loss_dur_disc,
@@ -465,7 +471,9 @@ def train_and_evaluate(
         grad_norm_d = commons.clip_grad_value_(net_d.parameters(), None)
         scaler.step(optim_d)
 
-        with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
+        with autocast(
+            device_type="cuda", enabled=hps.train.bf16_run, dtype=torch.bfloat16
+        ):
             loss_slm = wl.discriminator(
                 y.detach().squeeze(), y_hat.detach().squeeze()
             ).mean()
@@ -477,14 +485,18 @@ def train_and_evaluate(
         grad_norm_wd = commons.clip_grad_value_(net_wd.parameters(), None)
         scaler.step(optim_wd)
 
-        with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
+        with autocast(
+            device_type="cuda", enabled=hps.train.bf16_run, dtype=torch.bfloat16
+        ):
             # Generator
             y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(y, y_hat)
             if net_dur_disc is not None:
                 _, y_dur_hat_g = net_dur_disc(hidden_x, x_mask, logw_, logw, g)
                 _, y_dur_hat_g_sdp = net_dur_disc(hidden_x, x_mask, logw_, logw_sdp, g)
                 y_dur_hat_g = y_dur_hat_g + y_dur_hat_g_sdp
-            with autocast(enabled=hps.train.bf16_run, dtype=torch.bfloat16):
+            with autocast(
+                device_type="cuda", enabled=hps.train.bf16_run, dtype=torch.bfloat16
+            ):
                 loss_dur = torch.sum(l_length.float())
                 loss_mel = F.l1_loss(y_mel, y_hat_mel) * hps.train.c_mel
                 loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * hps.train.c_kl
