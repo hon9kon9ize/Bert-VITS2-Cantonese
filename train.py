@@ -29,16 +29,6 @@ import commons
 
 logging.getLogger("numba").setLevel(logging.WARNING)
 
-torch.backends.cuda.matmul.allow_tf32 = True
-torch.backends.cudnn.allow_tf32 = (
-    True  # If encountered training problem,please try to disable TF32.
-)
-torch.set_float32_matmul_precision("medium")
-torch.backends.cuda.sdp_kernel("flash")
-torch.backends.cuda.enable_flash_sdp(True)
-torch.backends.cuda.enable_mem_efficient_sdp(
-    True
-)  # Not available if torch version is lower than 2.0
 torch.backends.cudnn.benchmark = True
 global_step = 0
 
@@ -89,19 +79,19 @@ def run(rank, n_gpus, hps):
     collate_fn = TextAudioCollate()
     train_loader = DataLoader(
         train_dataset,
-        num_workers=4,
+        num_workers=14,
         shuffle=False,
         pin_memory=True,
         collate_fn=collate_fn,
         batch_sampler=train_sampler,
         persistent_workers=True,
-        prefetch_factor=4,
+        prefetch_factor=8,
     )  # DataLoader config could be adjusted.
     if rank == 0:
         eval_dataset = TextAudioLoader(hps.data.validation_files, hps.data)
         eval_loader = DataLoader(
             eval_dataset,
-            num_workers=4,
+            num_workers=14,
             shuffle=False,
             batch_size=1,
             pin_memory=True,

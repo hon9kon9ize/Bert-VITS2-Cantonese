@@ -1,17 +1,15 @@
+import os
 import math
 import torch
 from torch import nn
 from torch.nn import functional as F
-
+from torch.nn import Conv1d, ConvTranspose1d, Conv2d
+from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
 import commons
 import modules
 import attentions
 import monotonic_align
-
-from torch.nn import Conv1d, ConvTranspose1d, Conv2d
-from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
-from transformers import BertModel
-
+from bert import MultiTaskModel
 from commons import init_weights, get_padding
 
 
@@ -332,20 +330,28 @@ class MLP(nn.Module):
 
 
 class TextEncoder(nn.Module):
-    def __init__(self, bert, out_channels, hidden_channels, p_dropout):
+    def __init__(self, bert_path, out_channels, hidden_channels, p_dropout):
         super().__init__()
         self.out_channels = out_channels
-        self.bert = BertModel.from_pretrained(bert)
+        self.bert = MultiTaskModel.from_pretrained(bert_path)
+        self.bert.encoder = torch.compile(self.bert.encoder)
 
-        # for child in self.bert.children():
-        #    for param in child.parameters():
-        #        param.requires_grad = False
-        self.linear = nn.Linear(self.bert.config.hidden_size, hidden_channels, False)
+        self.bert.eval()
+
+        for child in self.bert.children():
+            for param in child.parameters():
+                param.requires_grad = False
+
+        self.linear = nn.Linear(
+            self.bert.encoder.config.hidden_size, hidden_channels, False
+        )
         self.proj = nn.Conv1d(hidden_channels, out_channels * 2, 1)
         self.dropout = nn.Dropout(p_dropout)
 
     def forward(self, x, attention_mask):
-        x = self.bert(input_ids=x, attention_mask=attention_mask)[0]
+        x = self.bert.encoder(
+            input_ids=x, attention_mask=attention_mask, output_hidden_states=True
+        ).last_hidden_state
         x = self.linear(x)
         x = torch.transpose(x, 1, -1)
         attention_mask = attention_mask.unsqueeze(1).to(x.dtype)
@@ -823,7 +829,7 @@ class SynthesizerTrn(nn.Module):
         n_layers_trans_flow=4,
         flow_share_parameter=False,
         use_transformer_flow=True,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.spec_channels = spec_channels
