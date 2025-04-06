@@ -3,7 +3,8 @@ from multiprocessing import Pool
 import commons
 import utils
 from tqdm import tqdm
-from text import check_bert_models, cleaned_text_to_sequence, get_bert
+from text.phonemize import phonemize
+from text.get_bert import get_bert
 import argparse
 import torch.multiprocessing as mp
 from config import config
@@ -20,21 +21,8 @@ def process_line(x):
             device = torch.device(f"cuda:{gpu_id}")
         else:
             device = torch.device("cpu")
-    wav_path, _, language_str, text, phones, tone, word2ph = line.strip().split("|")
-    phone = phones.split(" ")
-    tone = [int(i) for i in tone.split(" ")]
-    word2ph = [int(i) for i in word2ph.split(" ")]
-    word2ph = [i for i in word2ph]
-    phone, tone, language = cleaned_text_to_sequence(phone, tone, language_str)
-
-    if add_blank:
-        phone = commons.intersperse(phone, 0)
-        tone = commons.intersperse(tone, 0)
-        language = commons.intersperse(language, 0)
-        for i in range(len(word2ph)):
-            word2ph[i] = word2ph[i] * 2
-        word2ph[0] += 1
-
+    wav_path, text, phones = line.strip().split("|")
+    phonemes = phonemize(text, phones)["phonemes"]
     bert_path = wav_path.replace(".WAV", ".wav").replace(".wav", ".bert.pt")
 
     try:
@@ -42,15 +30,11 @@ def process_line(x):
         assert bert.shape[0] == 2048
     except Exception:
         try:
-            bert = get_bert(text, word2ph, language_str, device)
-            assert bert.shape[-1] == len(phone)
+            bert = get_bert(phonemes, device)
             torch.save(bert, bert_path)
         except Exception as e:
             print(f"Error: {text=}")
-            print(f"Error: {phone=}")
-            print(f"Error: {tone=}")
-            print(f"Error: {word2ph=}")
-            print(f"Error: {language_str=}")
+            print(f"Error: {phones=}")
             print(f"Error: {device=}")
             print(f"Error: {add_blank=}")
             print(line.strip().split("|"))
@@ -71,7 +55,7 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     config_path = args.config
     hps = utils.get_hparams_from_file(config_path)
-    check_bert_models()
+
     lines = []
     with open(hps.data.training_files, encoding="utf-8") as f:
         lines.extend(f.readlines())
@@ -87,7 +71,7 @@ if __name__ == "__main__":
                 pool.imap_unordered(process_line, zip(lines, add_blank)),
                 total=len(lines),
             ):
-                # 这里是缩进的代码块，表示循环体
-                pass  # 使用pass语句作为占位符
+                # 這裡是縮進的代碼塊，表示循環體
+                pass  # 使用pass語句作為佔位符
 
-    print(f"bert生成完毕!, 共有{len(lines)}个bert.pt生成!")
+    print(f"bert生成完畢!, 共有{len(lines)}個bert.pt生成!")

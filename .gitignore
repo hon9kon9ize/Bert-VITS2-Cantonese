@@ -188,3 +188,4 @@ Data/*
 /.vs
 output.wav
 pretrained_models
+*.ipynb

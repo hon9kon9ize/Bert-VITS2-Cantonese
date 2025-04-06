@@ -16,52 +16,6 @@ MATPLOTLIB_FLAG = False
 logger = logging.getLogger(__name__)
 
 
-def download_emo_models(mirror, repo_id, model_name):
-    if mirror == "openi":
-        import openi
-
-        openi.model.download_model(
-            "Stardust_minus/Bert-VITS2",
-            repo_id.split("/")[-1],
-            "./emotional",
-        )
-    else:
-        hf_hub_download(
-            repo_id,
-            "pytorch_model.bin",
-            local_dir=model_name,
-            local_dir_use_symlinks=False,
-        )
-
-
-def download_checkpoint(
-    dir_path, repo_config, token=None, regex="G_*.pth", mirror="openi"
-):
-    repo_id = repo_config["repo_id"]
-    f_list = glob.glob(os.path.join(dir_path, regex))
-    if f_list:
-        print("Use existed model, skip downloading.")
-        return
-    if mirror.lower() == "openi":
-        import openi
-
-        kwargs = {"token": token} if token else {}
-        openi.login(**kwargs)
-
-        model_image = repo_config["model_image"]
-        openi.model.download_model(repo_id, model_image, dir_path)
-
-        fs = glob.glob(os.path.join(dir_path, model_image, "*.pth"))
-        for file in fs:
-            shutil.move(file, dir_path)
-        shutil.rmtree(os.path.join(dir_path, model_image))
-    else:
-        for file in ["DUR_0.pth", "D_0.pth", "G_0.pth"]:
-            hf_hub_download(
-                repo_id, file, local_dir=dir_path, local_dir_use_symlinks=False
-            )
-
-
 def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False):
     assert os.path.isfile(checkpoint_path)
     checkpoint_dict = torch.load(checkpoint_path, map_location="cpu")
@@ -114,8 +68,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
         model.load_state_dict(new_state_dict, strict=False)
 
     logger.info(
-        "Loaded checkpoint '{}' (iteration {})".format(
-            checkpoint_path, iteration)
+        "Loaded checkpoint '{}' (iteration {})".format(checkpoint_path, iteration)
     )
 
     return model, optimizer, learning_rate, iteration
@@ -181,8 +134,7 @@ def plot_spectrogram_to_numpy(spectrogram):
     import numpy as np
 
     fig, ax = plt.subplots(figsize=(10, 2))
-    im = ax.imshow(spectrogram, aspect="auto",
-                   origin="lower", interpolation="none")
+    im = ax.imshow(spectrogram, aspect="auto", origin="lower", interpolation="none")
     plt.colorbar(im, ax=ax)
     plt.xlabel("Frames")
     plt.ylabel("Channels")
@@ -250,8 +202,7 @@ def get_hparams(init=True):
         default="./configs/base.json",
         help="JSON file for configuration",
     )
-    parser.add_argument("-m", "--model", type=str,
-                        required=True, help="Model name")
+    parser.add_argument("-m", "--model", type=str, required=True, help="Model name")
 
     args = parser.parse_args()
     model_dir = os.path.join("./logs", args.model)
@@ -302,8 +253,7 @@ def clean_checkpoints(path_to_models="logs/44k/", n_ckpts_to_keep=2, sort_by_tim
 
     def x_sorted(_x):
         return sorted(
-            [f for f in ckpts_files if f.startswith(
-                _x) and not f.endswith("_0.pth")],
+            [f for f in ckpts_files if f.startswith(_x) and not f.endswith("_0.pth")],
             key=sort_key,
         )
 
@@ -376,8 +326,7 @@ def get_logger(model_dir, filename="train.log"):
     logger = logging.getLogger(os.path.basename(model_dir))
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(
-        "%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s")
+    formatter = logging.Formatter("%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s")
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     h = logging.FileHandler(os.path.join(model_dir, filename))
@@ -460,8 +409,7 @@ def mix_model(
         if k not in state_dict1.keys():
             state_dict1[k] = state_dict2[k].clone()
     torch.save(
-        {"model": state_dict1, "iteration": 0,
-            "optimizer": None, "learning_rate": 0},
+        {"model": state_dict1, "iteration": 0, "optimizer": None, "learning_rate": 0},
         output_path,
     )
 
@@ -469,3 +417,14 @@ def mix_model(
 def get_steps(model_path):
     matches = re.findall(r"\d+", model_path)
     return matches[-1] if matches else None
+
+
+def length_to_mask(lengths):
+    mask = (
+        torch.arange(lengths.max())
+        .unsqueeze(0)
+        .expand(lengths.shape[0], -1)
+        .type_as(lengths)
+    )
+    mask = torch.gt(mask + 1, lengths.unsqueeze(1))
+    return mask
