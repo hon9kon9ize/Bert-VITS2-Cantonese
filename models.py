@@ -334,14 +334,6 @@ class TextEncoder(nn.Module):
         super().__init__()
         self.out_channels = out_channels
         self.bert = MultiTaskModel.from_pretrained(bert_path)
-        self.bert.encoder = torch.compile(self.bert.encoder)
-
-        self.bert.eval()
-
-        for child in self.bert.children():
-            for param in child.parameters():
-                param.requires_grad = False
-
         self.linear = nn.Linear(
             self.bert.encoder.config.hidden_size, hidden_channels, False
         )
